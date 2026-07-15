@@ -8,7 +8,7 @@ export interface RawModelInfo {
 }
 
 export interface ModelOption {
-  provider: 'whisper' | 'parakeet';
+  provider: 'whisper' | 'parakeet' | 'appleSpeech';
   name: string;
   displayName: string;
   size_mb: number;
@@ -77,6 +77,22 @@ export function useTranscriptionModels(transcriptModelConfig: TranscriptModelCon
       console.error('Failed to fetch Parakeet models:', err);
     }
 
+    // Add Apple Speech (macOS 26+ on-device) if the platform supports it.
+    // No model download to manage - the OS installs the locale asset on first use.
+    try {
+      const appleSpeechAvailable = await invoke<boolean>('apple_speech_is_available');
+      if (appleSpeechAvailable) {
+        allModels.push({
+          provider: 'appleSpeech' as const,
+          name: 'en-US',
+          displayName: '🍎 Apple Speech: en-US (on-device)',
+          size_mb: 0,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to check Apple Speech availability:', err);
+    }
+
     setAvailableModels(allModels);
 
     // Set default model based on user's saved configuration
@@ -88,7 +104,8 @@ export function useTranscriptionModels(transcriptModelConfig: TranscriptModelCon
     const configuredMatch = allModels.find(
       (m) =>
         (configuredProvider === 'localWhisper' && m.provider === 'whisper' && m.name === configuredModel) ||
-        (configuredProvider === 'parakeet' && m.provider === 'parakeet' && m.name === configuredModel)
+        (configuredProvider === 'parakeet' && m.provider === 'parakeet' && m.name === configuredModel) ||
+        (configuredProvider === 'appleSpeech' && m.provider === 'appleSpeech' && m.name === configuredModel)
     );
 
     // Only set default model if user hasn't manually selected one

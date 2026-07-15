@@ -671,6 +671,23 @@ pub async fn stop_recording<R: Runtime>(
                 warn!("⚠️ No Parakeet engine found to unload model");
             }
         }
+        #[cfg(target_os = "macos")]
+        Some("appleSpeech") => {
+            info!("🍎 Stopping Apple Speech sidecar...");
+            let engine_clone = {
+                let engine_guard = crate::apple_speech_engine::commands::APPLE_SPEECH_ENGINE
+                    .lock()
+                    .unwrap();
+                engine_guard.as_ref().cloned()
+            };
+
+            if let Some(engine) = engine_clone {
+                engine.shutdown().await;
+                info!("✅ Apple Speech sidecar stopped");
+            } else {
+                warn!("⚠️ No Apple Speech engine found to stop");
+            }
+        }
         _ => {
             // Default to Whisper
             info!("🎤 Unloading Whisper model...");

@@ -170,12 +170,14 @@ export function ImportAudioDialog({
     return availableModels.find((m) => m.provider === provider && m.name === name);
   }, [selectedModelKey, availableModels]);
   const isParakeetModel = selectedModel?.provider === 'parakeet';
+  // Parakeet and Apple Speech transcribe in a fixed language; no manual selection.
+  const isNoLanguageModel = isParakeetModel || selectedModel?.provider === 'appleSpeech';
 
   useEffect(() => {
-    if (isParakeetModel && selectedLang !== 'auto') {
+    if (isNoLanguageModel && selectedLang !== 'auto') {
       setSelectedLang('auto');
     }
-  }, [isParakeetModel, selectedLang]);
+  }, [isNoLanguageModel, selectedLang]);
 
   const handleSelectFile = async () => {
     const info = await selectFile();
@@ -190,7 +192,7 @@ export function ImportAudioDialog({
     await startImport(
       fileInfo.path,
       title || fileInfo.filename,
-      isParakeetModel ? null : selectedLang === 'auto' ? null : selectedLang,
+      isNoLanguageModel ? null : selectedLang === 'auto' ? null : selectedLang,
       selectedModel?.name || null,
       selectedModel?.provider || null
     );
@@ -343,7 +345,7 @@ export function ImportAudioDialog({
                   {showAdvanced && (
                     <div className="p-3 pt-0 space-y-4 border-t">
                       {/* Language selector */}
-                      {!isParakeetModel ? (
+                      {!isNoLanguageModel ? (
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             <Globe className="h-4 w-4 text-muted-foreground" />
@@ -369,7 +371,9 @@ export function ImportAudioDialog({
                             <span className="text-sm font-medium">Language</span>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Language selection isn't supported for Parakeet. It always uses automatic detection.
+                            {isParakeetModel
+                              ? "Language selection isn't supported for Parakeet. It always uses automatic detection."
+                              : "Apple Speech transcribes using its configured on-device locale (en-US)."}
                           </p>
                         </div>
                       )}
@@ -395,7 +399,7 @@ export function ImportAudioDialog({
                                   key={`${model.provider}:${model.name}`}
                                   value={`${model.provider}:${model.name}`}
                                 >
-                                  {model.displayName} ({Math.round(model.size_mb)} MB)
+                                  {model.displayName}{model.size_mb > 0 ? ` (${Math.round(model.size_mb)} MB)` : ''}
                                 </SelectItem>
                               ))}
                             </SelectContent>

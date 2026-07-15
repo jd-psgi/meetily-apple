@@ -19,8 +19,13 @@ use symphonia::core::probe::Hint;
 use super::audio_processing::{audio_to_mono, resample, resample_audio};
 use super::ffmpeg::find_ffmpeg_path;
 
-/// Extensions requiring ffmpeg pre-conversion (Symphonia lacks these demuxers/codecs)
-const FFMPEG_ONLY_EXTENSIONS: &[&str] = &["mkv", "webm", "wma"];
+/// Extensions requiring ffmpeg pre-conversion (Symphonia lacks these demuxers/codecs).
+/// Includes video containers, whose audio track ffmpeg extracts with `-vn`.
+const FFMPEG_ONLY_EXTENSIONS: &[&str] = &[
+    "mkv", "webm", "wma",
+    // Video containers - audio extracted, video discarded
+    "mov", "m4v", "avi", "mpg", "mpeg", "wmv", "flv", "3gp", "ts",
+];
 
 /// Progress callback for long-running operations
 /// Returns current progress (0-100) and a message
@@ -267,6 +272,72 @@ fn needs_ffmpeg_conversion(path: &Path) -> bool {
         .and_then(|e| e.to_str())
         .map(|ext| FFMPEG_ONLY_EXTENSIONS.contains(&ext.to_lowercase().as_str()))
         .unwrap_or(false)
+}
+
+/// Public predicate: does decoding this file require ffmpeg (vs. native Symphonia)?
+/// Callers use this to pick a cheap duration probe instead of a full decode.
+pub fn requires_ffmpeg(path: &Path) -> bool {
+    needs_ffmpeg_conversion(path)
+}
+
+/// Parse the duration (seconds) out of `ffmpeg -i` stderr text.
+/// Looks for a `Duration: HH:MM:SS.ss` line. Returns None if absent or N/A.
+/// Factored out for unit testing (the format is stable across ffmpeg versions).
+fn parse_ffmpeg_duration(stderr: &str) -> Option<f64> {
+    for line in stderr.lines() {
+        if let Some(idx) = line.find("Duration:") {
+            let rest = line[idx + "Duration:".len()..].trim_start();
+            let ts = rest.split(',').next().unwrap_or("").trim();
+            if ts.is_empty() || ts == "N/A" {
+                return None;
+            }
+            let parts: Vec<&str> = ts.split(':').collect();
+            if parts.len() == 3 {
+                let h: f64 = parts[0].trim().parse().ok()?;
+                let m: f64 = parts[1].trim().parse().ok()?;
+                let s: f64 = parts[2].trim().parse().ok()?;
+                return Some(h * 3600.0 + m * 60.0 + s);
+            }
+        }
+    }
+    None
+}
+
+/// Quickly probe a media file's duration via `ffmpeg -i` without decoding it.
+/// Used for formats Symphonia can't demux (e.g. large video containers), so
+/// validation doesn't full-transcode a multi-GB file just to show a duration.
+pub fn probe_duration_via_ffmpeg(path: &Path) -> Result<f64> {
+    let ffmpeg_path =
+        find_ffmpeg_path().ok_or_else(|| anyhow!("FFmpeg not found for duration probe"))?;
+    let input_str = path
+        .to_str()
+        .ok_or_else(|| anyhow!("Invalid input path (non-UTF8)"))?;
+
+    let mut command = Command::new(&ffmpeg_path);
+    command
+        .args(["-i", input_str])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped());
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    // `ffmpeg -i` with no output exits non-zero but still prints stream info
+    // to stderr; we parse it regardless of exit status.
+    let output = command
+        .spawn()
+        .map_err(|e| anyhow!("Failed to spawn ffmpeg for duration probe: {}", e))?
+        .wait_with_output()
+        .map_err(|e| anyhow!("Failed to wait for ffmpeg: {}", e))?;
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    parse_ffmpeg_duration(&stderr)
+        .ok_or_else(|| anyhow!("Could not determine duration from ffmpeg output"))
 }
 
 /// Convert an audio file to WAV using ffmpeg for formats Symphonia can't decode.
@@ -580,6 +651,23 @@ pub fn decode_audio_file_with_progress(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_parse_ffmpeg_duration() {
+        // Real ffmpeg -i stderr shape
+        let stderr = "  Duration: 00:00:05.93, start: 0.000000, bitrate: 92 kb/s\n  Stream #0:0: Video: h264";
+        let d = parse_ffmpeg_duration(stderr).expect("should parse");
+        assert!((d - 5.93).abs() < 0.001, "got {}", d);
+
+        // Hours + minutes
+        let stderr2 = "Duration: 01:02:03.50, bitrate: 128 kb/s";
+        let d2 = parse_ffmpeg_duration(stderr2).expect("should parse");
+        assert!((d2 - (3600.0 + 120.0 + 3.5)).abs() < 0.001, "got {}", d2);
+
+        // N/A and missing -> None
+        assert!(parse_ffmpeg_duration("  Duration: N/A, bitrate: N/A").is_none());
+        assert!(parse_ffmpeg_duration("no duration line here").is_none());
+    }
 
     #[test]
     fn test_to_whisper_format_mono_16k() {

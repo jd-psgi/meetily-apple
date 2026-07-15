@@ -160,23 +160,33 @@ pub fn validate_audio_file(path: &Path) -> Result<AudioFileInfo> {
         .unwrap_or("Imported Audio")
         .to_string();
 
-    // Try fast metadata-only validation first
-    let duration_seconds = match extract_duration_from_metadata(path) {
-        Ok(duration) => {
-            debug!(
-                "Got duration from metadata: {:.2}s (fast path)",
+    // Determine duration cheaply. Formats Symphonia can't demux (e.g. large
+    // video containers) are probed via `ffmpeg -i` instead of being fully
+    // decoded here — a full decode would transcode a multi-GB file just to
+    // show a duration, and run_import decodes it again anyway.
+    let duration_seconds = if crate::audio::decoder::requires_ffmpeg(path) {
+        match crate::audio::decoder::probe_duration_via_ffmpeg(path) {
+            Ok(duration) => {
+                debug!("Got duration from ffmpeg probe: {:.2}s", duration);
                 duration
-            );
-            duration
+            }
+            Err(e) => {
+                // Unknown duration; run_import computes the real value during decode.
+                warn!("FFmpeg duration probe failed: {}, reporting unknown", e);
+                0.0
+            }
         }
-        Err(e) => {
-            // Fallback to full decode if metadata unavailable
-            warn!(
-                "Metadata extraction failed: {}, falling back to full decode",
-                e
-            );
-            let decoded = decode_audio_file(path)?;
-            decoded.duration_seconds
+    } else {
+        match extract_duration_from_metadata(path) {
+            Ok(duration) => {
+                debug!("Got duration from metadata: {:.2}s (fast path)", duration);
+                duration
+            }
+            Err(e) => {
+                warn!("Metadata extraction failed: {}, falling back to full decode", e);
+                let decoded = decode_audio_file(path)?;
+                decoded.duration_seconds
+            }
         }
     };
 
@@ -265,7 +275,7 @@ pub async fn start_import<R: Runtime>(
     // Reset cancellation flag
     IMPORT_CANCELLED.store(false, Ordering::SeqCst);
 
-    let use_parakeet = provider.as_deref() == Some("parakeet");
+    let provider_for_unload = provider.clone();
     let result = run_import(
         app.clone(),
         source_path,
@@ -277,7 +287,7 @@ pub async fn start_import<R: Runtime>(
     .await;
 
     // Unload the engine after the batch job (success, failure, or cancellation)
-    super::common::unload_engine_after_batch(use_parakeet).await;
+    super::common::unload_engine_after_batch(provider_for_unload.as_deref()).await;
 
     // Guard will automatically clear flag on drop
     // No need for manual: IMPORT_IN_PROGRESS.store(false, Ordering::SeqCst);
@@ -330,6 +340,14 @@ async fn run_import<R: Runtime>(
 
     // Determine which provider to use (default to whisper)
     let use_parakeet = provider.as_deref() == Some("parakeet");
+    let use_apple_speech = provider.as_deref() == Some("appleSpeech");
+
+    #[cfg(not(target_os = "macos"))]
+    if use_apple_speech {
+        return Err(anyhow!(
+            "Apple Speech transcription is only available on macOS 26+"
+        ));
+    }
 
     emit_progress(&app, "copying", 5, "Creating meeting folder...");
 
@@ -508,13 +526,19 @@ async fn run_import<R: Runtime>(
     emit_progress(&app, "transcribing", 30, "Loading transcription engine...");
 
     // Initialize the appropriate engine
-    let whisper_engine = if !use_parakeet && total_segments > 0 {
+    let whisper_engine = if !use_parakeet && !use_apple_speech && total_segments > 0 {
         Some(get_or_init_whisper(&app, model.as_deref()).await?)
     } else {
         None
     };
     let parakeet_engine = if use_parakeet && total_segments > 0 {
         Some(get_or_init_parakeet(&app, model.as_deref()).await?)
+    } else {
+        None
+    };
+    #[cfg(target_os = "macos")]
+    let apple_speech_engine = if use_apple_speech && total_segments > 0 {
+        Some(get_or_init_apple_speech(&app, model.as_deref()).await?)
     } else {
         None
     };
@@ -578,8 +602,25 @@ async fn run_import<R: Runtime>(
             continue;
         }
 
-        // Transcribe
-        let (text, conf) = if use_parakeet {
+        // Transcribe. Apple Speech (macOS-only) is checked first; on other
+        // platforms `apple_result` is always None so the block compiles away.
+        #[cfg(target_os = "macos")]
+        let apple_result: Option<(String, f32)> = if use_apple_speech {
+            let engine = apple_speech_engine.as_ref().unwrap();
+            let text = engine
+                .transcribe_audio(segment.samples.clone())
+                .await
+                .map_err(|e| anyhow!("Apple Speech transcription failed on segment {}: {}", i, e))?;
+            Some((text, 0.9f32))
+        } else {
+            None
+        };
+        #[cfg(not(target_os = "macos"))]
+        let apple_result: Option<(String, f32)> = None;
+
+        let (text, conf) = if let Some(result) = apple_result {
+            result
+        } else if use_parakeet {
             let engine = parakeet_engine.as_ref().unwrap();
             let text = engine
                 .transcribe_audio(segment.samples.clone())
@@ -839,6 +880,41 @@ async fn get_or_init_parakeet<R: Runtime>(
     }
 }
 
+/// Get or initialize the Apple Speech engine (macOS 26+) and reserve its locale.
+#[cfg(target_os = "macos")]
+async fn get_or_init_apple_speech<R: Runtime>(
+    app: &AppHandle<R>,
+    requested_model: Option<&str>,
+) -> Result<Arc<crate::apple_speech_engine::AppleSpeechEngine>> {
+    use crate::apple_speech_engine::commands::APPLE_SPEECH_ENGINE;
+
+    crate::apple_speech_engine::commands::apple_speech_init()
+        .await
+        .map_err(|e| anyhow!("Failed to initialize Apple Speech engine: {}", e))?;
+
+    let engine = {
+        let guard = APPLE_SPEECH_ENGINE.lock().unwrap_or_else(|e| e.into_inner());
+        guard.as_ref().cloned()
+    }
+    .ok_or_else(|| anyhow!("Apple Speech engine not initialized"))?;
+
+    // The "model" for Apple Speech is the locale identifier (e.g. "en-US").
+    let locale = match requested_model {
+        Some(m) if !m.is_empty() => m.to_string(),
+        _ => get_configured_model(app, "appleSpeech").await?,
+    };
+
+    engine
+        .ensure_ready(Some(locale))
+        .await
+        .map_err(|e| anyhow!("Failed to prepare Apple Speech locale: {}", e))?;
+
+    Ok(engine)
+}
+
+/// Default Apple Speech locale used when none is configured.
+const DEFAULT_APPLE_SPEECH_LOCALE: &str = "en-US";
+
 /// Get the configured model from database
 async fn get_configured_model<R: Runtime>(app: &AppHandle<R>, provider_type: &str) -> Result<String> {
     let app_state = app
@@ -852,26 +928,25 @@ async fn get_configured_model<R: Runtime>(app: &AppHandle<R>, provider_type: &st
     .await
     .map_err(|e| anyhow!("Failed to query config: {}", e))?;
 
+    // Default model for a given provider type when config doesn't match.
+    let default_for = |pt: &str| match pt {
+        "parakeet" => DEFAULT_PARAKEET_MODEL.to_string(),
+        "appleSpeech" => DEFAULT_APPLE_SPEECH_LOCALE.to_string(),
+        _ => DEFAULT_WHISPER_MODEL.to_string(),
+    };
+
     match result {
         Some((provider, model)) => {
             if (provider_type == "whisper" && (provider == "localWhisper" || provider == "whisper"))
                 || (provider_type == "parakeet" && provider == "parakeet")
+                || (provider_type == "appleSpeech" && provider == "appleSpeech")
             {
                 Ok(model)
             } else {
-                // Return default model for the requested type
-                Ok(if provider_type == "parakeet" {
-                    DEFAULT_PARAKEET_MODEL.to_string()
-                } else {
-                    DEFAULT_WHISPER_MODEL.to_string()
-                })
+                Ok(default_for(provider_type))
             }
         }
-        None => Ok(if provider_type == "parakeet" {
-            DEFAULT_PARAKEET_MODEL.to_string()
-        } else {
-            DEFAULT_WHISPER_MODEL.to_string()
-        }),
+        None => Ok(default_for(provider_type)),
     }
 }
 
@@ -926,7 +1001,7 @@ pub async fn select_and_validate_audio_command<R: Runtime>(
         app_clone
             .dialog()
             .file()
-            .add_filter("Audio Files", &AUDIO_EXTENSIONS.iter().map(|s| *s).collect::<Vec<_>>())
+            .add_filter("Audio & Video Files", &AUDIO_EXTENSIONS.iter().map(|s| *s).collect::<Vec<_>>())
             .blocking_pick_file()
     })
     .await

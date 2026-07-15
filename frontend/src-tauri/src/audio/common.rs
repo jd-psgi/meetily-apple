@@ -16,8 +16,9 @@ pub(crate) async fn acquire_engine_lifecycle_lock() -> OwnedMutexGuard<()> {
 
 /// Unload the transcription engine after a batch job (import or retranscription).
 /// Skips unloading if a live recording is currently in progress, since recording
-/// uses the same global engine instances.
-pub(crate) async fn unload_engine_after_batch(use_parakeet: bool) {
+/// uses the same global engine instances. `provider` is the transcript-config
+/// provider string ("parakeet", "appleSpeech", or Whisper otherwise).
+pub(crate) async fn unload_engine_after_batch(provider: Option<&str>) {
     let _engine_lifecycle_guard = acquire_engine_lifecycle_lock().await;
 
     if crate::audio::recording_commands::is_recording().await {
@@ -25,23 +26,41 @@ pub(crate) async fn unload_engine_after_batch(use_parakeet: bool) {
         return;
     }
 
-    if use_parakeet {
-        use crate::parakeet_engine::commands::PARAKEET_ENGINE;
-        let engine = {
-            let guard = PARAKEET_ENGINE.lock().unwrap_or_else(|e| e.into_inner());
-            guard.as_ref().cloned()
-        };
-        if let Some(e) = engine {
-            e.unload_model().await;
+    match provider {
+        Some("parakeet") => {
+            use crate::parakeet_engine::commands::PARAKEET_ENGINE;
+            let engine = {
+                let guard = PARAKEET_ENGINE.lock().unwrap_or_else(|e| e.into_inner());
+                guard.as_ref().cloned()
+            };
+            if let Some(e) = engine {
+                e.unload_model().await;
+            }
         }
-    } else {
-        use crate::whisper_engine::commands::WHISPER_ENGINE;
-        let engine = {
-            let guard = WHISPER_ENGINE.lock().unwrap_or_else(|e| e.into_inner());
-            guard.as_ref().cloned()
-        };
-        if let Some(e) = engine {
-            e.unload_model().await;
+        Some("appleSpeech") => {
+            // Apple Speech runs a lightweight sidecar; stop it so it isn't left
+            // idle. It respawns on next use. (macOS-only; no-op elsewhere.)
+            #[cfg(target_os = "macos")]
+            {
+                use crate::apple_speech_engine::commands::APPLE_SPEECH_ENGINE;
+                let engine = {
+                    let guard = APPLE_SPEECH_ENGINE.lock().unwrap_or_else(|e| e.into_inner());
+                    guard.as_ref().cloned()
+                };
+                if let Some(e) = engine {
+                    e.shutdown().await;
+                }
+            }
+        }
+        _ => {
+            use crate::whisper_engine::commands::WHISPER_ENGINE;
+            let engine = {
+                let guard = WHISPER_ENGINE.lock().unwrap_or_else(|e| e.into_inner());
+                guard.as_ref().cloned()
+            };
+            if let Some(e) = engine {
+                e.unload_model().await;
+            }
         }
     }
 }

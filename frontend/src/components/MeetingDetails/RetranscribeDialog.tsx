@@ -93,12 +93,14 @@ export function RetranscribeDialog({
     return availableModels.find(m => m.provider === provider && m.name === name);
   }, [selectedModelKey, availableModels]);
   const isParakeetModel = selectedModelDetails?.provider === 'parakeet';
+  // Parakeet and Apple Speech transcribe in a fixed language; no manual selection.
+  const isNoLanguageModel = isParakeetModel || selectedModelDetails?.provider === 'appleSpeech';
 
   useEffect(() => {
-    if (isParakeetModel && selectedLang !== 'auto') {
+    if (isNoLanguageModel && selectedLang !== 'auto') {
       setSelectedLang('auto');
     }
-  }, [isParakeetModel, selectedLang]);
+  }, [isNoLanguageModel, selectedLang]);
 
   // Reset state only when dialog transitions from closed to open
   // This prevents re-initialization when config changes while dialog is already open
@@ -207,9 +209,9 @@ export function RetranscribeDialog({
     setProgress(null);
 
     try {
-      const languageToSend = isParakeetModel ? null : selectedLang === 'auto' ? null : selectedLang;
+      const languageToSend = isNoLanguageModel ? null : selectedLang === 'auto' ? null : selectedLang;
       await Analytics.track('enhance_transcript_started', {
-        language: isParakeetModel ? 'auto' : (selectedLang === 'auto' ? 'auto' : selectedLang),
+        language: isNoLanguageModel ? 'auto' : (selectedLang === 'auto' ? 'auto' : selectedLang),
         model_provider: selectedModelDetails?.provider || '',
         model_name: selectedModelDetails?.name || ''
       });
@@ -301,7 +303,7 @@ export function RetranscribeDialog({
 
         <div className="space-y-4 py-4">
           {!isProcessing && !error && (
-            !isParakeetModel ? (
+            !isNoLanguageModel ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Globe className="h-4 w-4 text-muted-foreground" />
@@ -330,7 +332,9 @@ export function RetranscribeDialog({
                   <span className="text-sm font-medium">Language</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Language selection isn't supported for Parakeet. It always uses automatic detection.
+                  {isParakeetModel
+                    ? "Language selection isn't supported for Parakeet. It always uses automatic detection."
+                    : "Apple Speech transcribes using its configured on-device locale (en-US)."}
                 </p>
               </div>
             )
@@ -349,7 +353,7 @@ export function RetranscribeDialog({
                 <SelectContent>
                   {availableModels.map((model) => (
                     <SelectItem key={`${model.provider}:${model.name}`} value={`${model.provider}:${model.name}`}>
-                      {model.displayName} ({Math.round(model.size_mb)} MB)
+                      {model.displayName}{model.size_mb > 0 ? ` (${Math.round(model.size_mb)} MB)` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>

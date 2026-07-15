@@ -101,11 +101,11 @@ pub async fn start_retranscription<R: Runtime>(
     // Reset cancellation flag
     RETRANSCRIPTION_CANCELLED.store(false, Ordering::SeqCst);
 
-    let use_parakeet = provider.as_deref() == Some("parakeet");
+    let provider_for_unload = provider.clone();
     let result = run_retranscription(app.clone(), meeting_id.clone(), meeting_folder_path, language, model, provider).await;
 
     // Unload the engine after the batch job (success, failure, or cancellation)
-    super::common::unload_engine_after_batch(use_parakeet).await;
+    super::common::unload_engine_after_batch(provider_for_unload.as_deref()).await;
 
     // Guard will automatically clear flag on drop
     // No need for manual: RETRANSCRIPTION_IN_PROGRESS.store(false, Ordering::SeqCst);
@@ -182,6 +182,14 @@ async fn run_retranscription<R: Runtime>(
 
     // Determine which provider to use (default to whisper)
     let use_parakeet = provider.as_deref() == Some("parakeet");
+    let use_apple_speech = provider.as_deref() == Some("appleSpeech");
+
+    #[cfg(not(target_os = "macos"))]
+    if use_apple_speech {
+        return Err(anyhow!(
+            "Apple Speech transcription is only available on macOS 26+"
+        ));
+    }
 
     info!(
         "Starting retranscription for meeting {} with language {:?}, model {:?}, provider {:?}",
@@ -299,13 +307,19 @@ async fn run_retranscription<R: Runtime>(
     emit_progress(&app, &meeting_id, "transcribing", 25, "Loading transcription engine...");
 
     // Initialize the appropriate engine once (not per-segment)
-    let whisper_engine = if !use_parakeet {
+    let whisper_engine = if !use_parakeet && !use_apple_speech {
         Some(get_or_init_whisper(&app, model.as_deref()).await?)
     } else {
         None
     };
     let parakeet_engine = if use_parakeet {
         Some(get_or_init_parakeet(&app, model.as_deref()).await?)
+    } else {
+        None
+    };
+    #[cfg(target_os = "macos")]
+    let apple_speech_engine = if use_apple_speech {
+        Some(get_or_init_apple_speech(&app, model.as_deref()).await?)
     } else {
         None
     };
@@ -367,8 +381,25 @@ async fn run_retranscription<R: Runtime>(
             continue;
         }
 
-        // Transcribe this segment
-        let (text, conf) = if use_parakeet {
+        // Transcribe this segment. Apple Speech (macOS-only) is checked first;
+        // on other platforms `apple_result` is always None so it compiles away.
+        #[cfg(target_os = "macos")]
+        let apple_result: Option<(String, f32)> = if use_apple_speech {
+            let engine = apple_speech_engine.as_ref().unwrap();
+            let text = engine
+                .transcribe_audio(segment.samples.clone())
+                .await
+                .map_err(|e| anyhow!("Apple Speech transcription failed on segment {}: {}", i, e))?;
+            Some((text, 0.9f32))
+        } else {
+            None
+        };
+        #[cfg(not(target_os = "macos"))]
+        let apple_result: Option<(String, f32)> = None;
+
+        let (text, conf) = if let Some(result) = apple_result {
+            result
+        } else if use_parakeet {
             let engine = parakeet_engine.as_ref().unwrap();
             let text = engine
                 .transcribe_audio(segment.samples.clone())
@@ -676,6 +707,37 @@ async fn get_or_init_parakeet<R: Runtime>(
         }
         None => Err(anyhow!("Parakeet engine not initialized")),
     }
+}
+
+/// Get or initialize the Apple Speech engine (macOS 26+) and reserve its locale.
+/// The `requested_model` is the locale identifier (e.g. "en-US").
+#[cfg(target_os = "macos")]
+async fn get_or_init_apple_speech<R: Runtime>(
+    _app: &AppHandle<R>,
+    requested_model: Option<&str>,
+) -> Result<Arc<crate::apple_speech_engine::AppleSpeechEngine>> {
+    use crate::apple_speech_engine::commands::APPLE_SPEECH_ENGINE;
+
+    crate::apple_speech_engine::commands::apple_speech_init()
+        .await
+        .map_err(|e| anyhow!("Failed to initialize Apple Speech engine: {}", e))?;
+
+    let engine = {
+        let guard = APPLE_SPEECH_ENGINE.lock().unwrap_or_else(|e| e.into_inner());
+        guard.as_ref().cloned()
+    }
+    .ok_or_else(|| anyhow!("Apple Speech engine not initialized"))?;
+
+    // ensure_ready(None) falls back to the engine's default locale (en-US).
+    let locale = requested_model
+        .filter(|m| !m.is_empty())
+        .map(|m| m.to_string());
+    engine
+        .ensure_ready(locale)
+        .await
+        .map_err(|e| anyhow!("Failed to prepare Apple Speech locale: {}", e))?;
+
+    Ok(engine)
 }
 
 /// Get the configured Parakeet model name from the database
