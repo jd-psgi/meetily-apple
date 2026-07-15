@@ -15,6 +15,8 @@ use tauri::{AppHandle, Manager, Runtime};
 pub enum TranscriptionEngine {
     Whisper(Arc<crate::whisper_engine::WhisperEngine>),  // Direct access (backward compat)
     Parakeet(Arc<crate::parakeet_engine::ParakeetEngine>), // Direct access (backward compat)
+    #[cfg(target_os = "macos")]
+    AppleSpeech(Arc<crate::apple_speech_engine::AppleSpeechEngine>),
     Provider(Arc<dyn TranscriptionProvider>),  // Trait-based (preferred for new code)
 }
 
@@ -24,6 +26,8 @@ impl TranscriptionEngine {
         match self {
             Self::Whisper(engine) => engine.is_model_loaded().await,
             Self::Parakeet(engine) => engine.is_model_loaded().await,
+            #[cfg(target_os = "macos")]
+            Self::AppleSpeech(engine) => engine.is_model_loaded().await,
             Self::Provider(provider) => provider.is_model_loaded().await,
         }
     }
@@ -33,6 +37,8 @@ impl TranscriptionEngine {
         match self {
             Self::Whisper(engine) => engine.get_current_model().await,
             Self::Parakeet(engine) => engine.get_current_model().await,
+            #[cfg(target_os = "macos")]
+            Self::AppleSpeech(engine) => engine.get_current_model().await,
             Self::Provider(provider) => provider.get_current_model().await,
         }
     }
@@ -42,6 +48,8 @@ impl TranscriptionEngine {
         match self {
             Self::Whisper(_) => "Whisper (direct)",
             Self::Parakeet(_) => "Parakeet (direct)",
+            #[cfg(target_os = "macos")]
+            Self::AppleSpeech(_) => "Apple Speech (direct)",
             Self::Provider(provider) => provider.provider_name(),
         }
     }
@@ -135,6 +143,28 @@ pub async fn validate_transcription_model_ready<R: Runtime>(app: &AppHandle<R>) 
                 }
             }
         }
+        #[cfg(target_os = "macos")]
+        "appleSpeech" => {
+            info!("🔍 Validating Apple Speech locale...");
+            if let Err(init_error) = crate::apple_speech_engine::commands::apple_speech_init().await {
+                warn!("❌ Failed to initialize Apple Speech engine: {}", init_error);
+                return Err(format!(
+                    "Failed to initialize speech recognition: {}",
+                    init_error
+                ));
+            }
+
+            match crate::apple_speech_engine::commands::apple_speech_validate_model_ready_with_config(app).await {
+                Ok(locale) => {
+                    info!("✅ Apple Speech locale validation successful: {} is ready", locale);
+                    Ok(())
+                }
+                Err(e) => {
+                    warn!("❌ Apple Speech locale validation failed: {}", e);
+                    Err(e)
+                }
+            }
+        }
         other => {
             warn!("❌ Unsupported transcription provider for local recording: {}", other);
             Err(format!(
@@ -209,6 +239,33 @@ pub async fn get_or_init_transcription_engine<R: Runtime>(
                 }
                 None => {
                     Err("Parakeet engine not initialized. This should not happen after validation.".to_string())
+                }
+            }
+        }
+        #[cfg(target_os = "macos")]
+        "appleSpeech" => {
+            info!("🍎 Initializing Apple Speech transcription engine");
+
+            let engine = {
+                let guard = crate::apple_speech_engine::commands::APPLE_SPEECH_ENGINE
+                    .lock()
+                    .unwrap();
+                guard.as_ref().cloned()
+            };
+
+            match engine {
+                Some(engine) => {
+                    if engine.is_model_loaded().await {
+                        let locale = engine.get_current_model().await
+                            .unwrap_or_else(|| "unknown".to_string());
+                        info!("✅ Apple Speech locale '{}' already reserved", locale);
+                        Ok(TranscriptionEngine::AppleSpeech(engine))
+                    } else {
+                        Err("Apple Speech engine initialized but no locale reserved. This should not happen after validation.".to_string())
+                    }
+                }
+                None => {
+                    Err("Apple Speech engine not initialized. This should not happen after validation.".to_string())
                 }
             }
         }

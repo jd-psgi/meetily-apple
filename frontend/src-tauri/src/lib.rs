@@ -37,6 +37,8 @@ pub(crate) use perf_trace;
 // Declare audio module
 pub mod analytics;
 pub mod api;
+#[cfg(target_os = "macos")]
+pub mod apple_speech_engine;
 pub mod audio;
 pub mod config;
 pub mod console_utils;
@@ -471,6 +473,17 @@ pub fn run() {
                 }
             });
 
+            // Initialize Apple Speech engine on startup (macOS 26+ only; the
+            // sidecar itself is only spawned lazily on first use)
+            #[cfg(target_os = "macos")]
+            tauri::async_runtime::spawn(async {
+                if apple_speech_engine::AppleSpeechEngine::is_available() {
+                    if let Err(e) = apple_speech_engine::commands::apple_speech_init().await {
+                        log::error!("Failed to initialize Apple Speech engine on startup: {}", e);
+                    }
+                }
+            });
+
             // Initialize ModelManager for summary engine (async, non-blocking)
             let app_handle_for_model_manager = _app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -582,6 +595,17 @@ pub fn run() {
             parakeet_engine::commands::parakeet_cancel_download,
             parakeet_engine::commands::parakeet_delete_corrupted_model,
             parakeet_engine::commands::open_parakeet_models_folder,
+            // Apple Speech engine commands (macOS 26+ only)
+            #[cfg(target_os = "macos")]
+            apple_speech_engine::commands::apple_speech_init,
+            #[cfg(target_os = "macos")]
+            apple_speech_engine::commands::apple_speech_is_available,
+            #[cfg(target_os = "macos")]
+            apple_speech_engine::commands::apple_speech_get_current_model,
+            #[cfg(target_os = "macos")]
+            apple_speech_engine::commands::apple_speech_is_model_loaded,
+            #[cfg(target_os = "macos")]
+            apple_speech_engine::commands::apple_speech_transcribe_audio,
             // Parallel processing commands
             whisper_engine::parallel_commands::initialize_parallel_processor,
             whisper_engine::parallel_commands::start_parallel_processing,

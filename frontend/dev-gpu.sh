@@ -162,6 +162,39 @@ else
     exit 1
 fi
 
+# Build apple-speech-helper sidecar (macOS only - wraps Apple's on-device
+# SpeechAnalyzer/SpeechTranscriber, which is a Swift-only API)
+if [ "$OS" == "macos" ]; then
+    echo ""
+    echo -e "${BLUE}🍎 Building apple-speech-helper sidecar (debug)...${NC}"
+
+    APPLE_SPEECH_HELPER_DIR="$WORKSPACE_ROOT/apple-speech-helper"
+
+    if command_exists swift; then
+        (cd "$APPLE_SPEECH_HELPER_DIR" && swift build)
+
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}❌ Failed to build apple-speech-helper${NC}"
+            exit 1
+        fi
+
+        find "$BINARIES_DIR" -name "apple-speech-helper*" -delete
+
+        APPLE_SPEECH_SRC="$APPLE_SPEECH_HELPER_DIR/.build/debug/apple-speech-helper"
+        APPLE_SPEECH_DEST="$BINARIES_DIR/apple-speech-helper-$TARGET_TRIPLE"
+
+        if [ -f "$APPLE_SPEECH_SRC" ]; then
+            cp "$APPLE_SPEECH_SRC" "$APPLE_SPEECH_DEST"
+            echo -e "${GREEN}✅ Copied binary to $APPLE_SPEECH_DEST${NC}"
+        else
+            echo -e "${RED}❌ Binary not found at $APPLE_SPEECH_SRC${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${YELLOW}⚠️  Swift toolchain not found, skipping apple-speech-helper (Apple Speech engine will be unavailable)${NC}"
+    fi
+fi
+
 # Run tauri dev using npm scripts
 echo ""
 echo -e "${CYAN}Starting complete Tauri application...${NC}"

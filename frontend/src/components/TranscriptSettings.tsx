@@ -10,10 +10,12 @@ import { ParakeetModelManager } from './ParakeetModelManager';
 
 
 export interface TranscriptModelProps {
-    provider: 'localWhisper' | 'parakeet' | 'deepgram' | 'elevenLabs' | 'groq' | 'openai';
+    provider: 'localWhisper' | 'parakeet' | 'appleSpeech' | 'deepgram' | 'elevenLabs' | 'groq' | 'openai';
     model: string;
     apiKey?: string | null;
 }
+
+const DEFAULT_APPLE_SPEECH_LOCALE = 'en-US';
 
 export interface TranscriptSettingsProps {
     transcriptModelConfig: TranscriptModelProps;
@@ -27,6 +29,7 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
     const [isApiKeyLocked, setIsApiKeyLocked] = useState<boolean>(true);
     const [isLockButtonVibrating, setIsLockButtonVibrating] = useState<boolean>(false);
     const [uiProvider, setUiProvider] = useState<TranscriptModelProps['provider']>(transcriptModelConfig.provider);
+    const [appleSpeechAvailable, setAppleSpeechAvailable] = useState(false);
 
     // Sync uiProvider when backend config changes (e.g., after model selection or initial load)
     useEffect(() => {
@@ -38,6 +41,14 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
             setApiKey(null);
         }
     }, [transcriptModelConfig.provider]);
+
+    // Apple Speech (SpeechAnalyzer) only exists on macOS 26+; ask the backend
+    // rather than sniffing the platform here, since it also gates on OS version.
+    useEffect(() => {
+        invoke<boolean>('apple_speech_is_available')
+            .then(setAppleSpeechAvailable)
+            .catch(() => setAppleSpeechAvailable(false));
+    }, []);
 
     const fetchApiKey = async (provider: string) => {
         try {
@@ -53,6 +64,7 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
     const modelOptions = {
         localWhisper: [], // Model selection handled by ModelManager component
         parakeet: [], // Model selection handled by ParakeetModelManager component
+        appleSpeech: [], // No model to select - locale asset installs automatically
         deepgram: ['nova-2-phonecall'],
         elevenLabs: ['eleven_multilingual_v2'],
         groq: ['llama-3.3-70b-versatile'],
@@ -112,7 +124,15 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
                                 onValueChange={(value) => {
                                     const provider = value as TranscriptModelProps['provider'];
                                     setUiProvider(provider);
-                                    if (provider !== 'localWhisper' && provider !== 'parakeet') {
+                                    if (provider === 'appleSpeech') {
+                                        setTranscriptModelConfig({
+                                            ...transcriptModelConfig,
+                                            provider: 'appleSpeech',
+                                            model: transcriptModelConfig.provider === 'appleSpeech'
+                                                ? transcriptModelConfig.model
+                                                : DEFAULT_APPLE_SPEECH_LOCALE,
+                                        });
+                                    } else if (provider !== 'localWhisper' && provider !== 'parakeet') {
                                         fetchApiKey(provider);
                                     }
                                 }}
@@ -123,6 +143,9 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
                                 <SelectContent>
                                     <SelectItem value="parakeet">⚡ Parakeet (Recommended - Real-time / Accurate)</SelectItem>
                                     <SelectItem value="localWhisper">🏠 Local Whisper (High Accuracy)</SelectItem>
+                                    {appleSpeechAvailable && (
+                                        <SelectItem value="appleSpeech">🍎 Apple Speech (On-device, macOS 26+)</SelectItem>
+                                    )}
                                     {/* <SelectItem value="deepgram">☁️ Deepgram (Backup)</SelectItem>
                                     <SelectItem value="elevenLabs">☁️ ElevenLabs</SelectItem>
                                     <SelectItem value="groq">☁️ Groq</SelectItem>
@@ -130,7 +153,7 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
                                 </SelectContent>
                             </Select>
 
-                            {uiProvider !== 'localWhisper' && uiProvider !== 'parakeet' && (
+                            {uiProvider !== 'localWhisper' && uiProvider !== 'parakeet' && uiProvider !== 'appleSpeech' && (
                                 <Select
                                     value={transcriptModelConfig.model}
                                     onValueChange={(value) => {
@@ -169,6 +192,17 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
                                 onModelSelect={handleParakeetModelSelect}
                                 autoSave={true}
                             />
+                        </div>
+                    )}
+
+                    {uiProvider === 'appleSpeech' && (
+                        <div className="mt-6 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                            <p className="font-medium">🍎 Apple Speech (on-device)</p>
+                            <p className="mt-1 text-xs text-gray-500">
+                                Uses Apple&apos;s on-device SpeechAnalyzer. No model download to manage here — the{' '}
+                                {transcriptModelConfig.provider === 'appleSpeech' ? transcriptModelConfig.model : DEFAULT_APPLE_SPEECH_LOCALE}{' '}
+                                locale asset installs automatically the first time you record.
+                            </p>
                         </div>
                     )}
 
