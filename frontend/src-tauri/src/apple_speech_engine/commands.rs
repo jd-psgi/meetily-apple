@@ -1,6 +1,6 @@
 use crate::apple_speech_engine::AppleSpeechEngine;
 use std::sync::{Arc, Mutex};
-use tauri::{command, AppHandle, Runtime};
+use tauri::{command, AppHandle, Manager, Runtime};
 
 pub const DEFAULT_APPLE_SPEECH_LOCALE: &str = "en-US";
 

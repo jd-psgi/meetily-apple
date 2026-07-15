@@ -107,6 +107,32 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
         }
     };
 
+    const handleAppleSpeechSelect = async () => {
+        const locale = transcriptModelConfig.provider === 'appleSpeech'
+            ? transcriptModelConfig.model
+            : DEFAULT_APPLE_SPEECH_LOCALE;
+
+        setTranscriptModelConfig({
+            ...transcriptModelConfig,
+            provider: 'appleSpeech',
+            model: locale,
+        });
+
+        // Whisper/Parakeet persist their selection via ModelManager/ParakeetModelManager's
+        // autoSave path (invoke('api_save_transcript_config', ...)); Apple Speech has no
+        // such manager component, so persist it here instead - otherwise the dropdown
+        // shows the selection but recording keeps using whatever was last saved.
+        try {
+            await invoke('api_save_transcript_config', {
+                provider: 'appleSpeech',
+                model: locale,
+                apiKey: null,
+            });
+        } catch (error) {
+            console.error('Failed to save Apple Speech selection:', error);
+        }
+    };
+
     return (
         <div>
             <div>
@@ -125,13 +151,7 @@ export function TranscriptSettings({ transcriptModelConfig, setTranscriptModelCo
                                     const provider = value as TranscriptModelProps['provider'];
                                     setUiProvider(provider);
                                     if (provider === 'appleSpeech') {
-                                        setTranscriptModelConfig({
-                                            ...transcriptModelConfig,
-                                            provider: 'appleSpeech',
-                                            model: transcriptModelConfig.provider === 'appleSpeech'
-                                                ? transcriptModelConfig.model
-                                                : DEFAULT_APPLE_SPEECH_LOCALE,
-                                        });
+                                        handleAppleSpeechSelect();
                                     } else if (provider !== 'localWhisper' && provider !== 'parakeet') {
                                         fetchApiKey(provider);
                                     }
