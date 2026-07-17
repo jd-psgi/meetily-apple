@@ -56,6 +56,7 @@ pub mod summary;
 pub mod tray;
 pub mod utils;
 pub mod whisper_engine;
+pub mod wiki;
 
 use audio::{list_audio_devices, AudioDevice, trigger_audio_permission};
 use log::{error as log_error, info as log_info};
@@ -695,6 +696,11 @@ pub fn run() {
             summary::template_commands::api_list_templates,
             summary::template_commands::api_get_template_details,
             summary::template_commands::api_validate_template,
+            wiki::commands::get_wiki_preferences,
+            wiki::commands::set_wiki_preferences,
+            wiki::commands::get_default_wiki_folder_path,
+            wiki::commands::open_wiki_folder,
+            wiki::commands::select_wiki_folder,
             // Built-in AI commands
             summary::summary_engine::commands::builtin_ai_list_models,
             summary::summary_engine::commands::builtin_ai_get_model_info,

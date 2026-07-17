@@ -74,7 +74,7 @@ enum MeetingFolderResolution {
 /// Expected format: { "markdown": "...", "summary_json": [...BlockNote blocks...] }
 #[tauri::command]
 pub async fn api_save_meeting_summary<R: Runtime>(
-    _app: AppHandle<R>,
+    app: AppHandle<R>,
     state: tauri::State<'_, AppState>,
     meeting_id: String,
     summary: serde_json::Value,
@@ -89,6 +89,16 @@ pub async fn api_save_meeting_summary<R: Runtime>(
     match SummaryProcessesRepository::update_meeting_summary(pool, &meeting_id, &summary).await {
         Ok(true) => {
             log_info!("Summary saved successfully for meeting_id: {}", meeting_id);
+
+            // Fire-and-forget: write the completed summary + transcript to the
+            // user's configured wiki folder, if the feature is enabled. Never
+            // blocks the response or fails the save if the wiki write fails.
+            let wiki_app = app.clone();
+            let wiki_meeting_id = meeting_id.clone();
+            tauri::async_runtime::spawn(async move {
+                crate::wiki::write_meeting_to_wiki(&wiki_app, &wiki_meeting_id).await;
+            });
+
             Ok(serde_json::json!({
                 "message": "Meeting summary saved successfully"
             }))
