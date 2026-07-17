@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meetily Template Cheatsheet</title>
+</head>
+<body>
+<button id="themeToggle" aria-label="Toggle light or dark theme" style="position:fixed;top:14px;right:16px;z-index:50;font:500 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">Theme</button>
+<style>
+  :root {
+    --bg: #F6F7F9;
+    --surface: #FFFFFF;
+    --surface-2: #EEF1F5;
+    --ink: #1B2733;
+    --muted: #5A6675;
+    --faint: #8A94A2;
+    --border: #E2E6EC;
+    --accent: #17697B;
+    --accent-soft: #E1EFF1;
+    --accent-ink: #0F4D5A;
+
+    --cat-general: #6B7685;
+    --cat-sales: #17697B;
+    --cat-vendor: #B47A20;
+    --cat-project: #3E6DB5;
+    --cat-ops: #C0553B;
+    --cat-clinical: #8A6FB0;
+
+    --font-display: "Charter", "Iowan Old Style", "Palatino Linotype", Palatino, ui-serif, Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+    --maxw: 1080px;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(20,30,45,.04), 0 6px 20px rgba(20,30,45,.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10141A;
+      --surface: #171C24;
+      --surface-2: #1F262F;
+      --ink: #E7ECF2;
+      --muted: #98A3B1;
+      --faint: #6C7784;
+      --border: #29313C;
+      --accent: #46B3C6;
+      --accent-soft: #16323A;
+      --accent-ink: #8FD6E2;
+
+      --cat-general: #8B96A4;
+      --cat-sales: #46B3C6;
+      --cat-vendor: #D3A24E;
+      --cat-project: #6E97DE;
+      --cat-ops: #E0785C;
+      --cat-clinical: #AD93D0;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F7F9; --surface: #FFFFFF; --surface-2: #EEF1F5; --ink: #1B2733;
+    --muted: #5A6675; --faint: #8A94A2; --border: #E2E6EC; --accent: #17697B;
+    --accent-soft: #E1EFF1; --accent-ink: #0F4D5A;
+    --cat-general:#6B7685; --cat-sales:#17697B; --cat-vendor:#B47A20; --cat-project:#3E6DB5; --cat-ops:#C0553B; --cat-clinical:#8A6FB0;
+    --shadow: 0 1px 2px rgba(20,30,45,.04), 0 6px 20px rgba(20,30,45,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg:#10141A; --surface:#171C24; --surface-2:#1F262F; --ink:#E7ECF2;
+    --muted:#98A3B1; --faint:#6C7784; --border:#29313C; --accent:#46B3C6;
+    --accent-soft:#16323A; --accent-ink:#8FD6E2;
+    --cat-general:#8B96A4; --cat-sales:#46B3C6; --cat-vendor:#D3A24E; --cat-project:#6E97DE; --cat-ops:#E0785C; --cat-clinical:#AD93D0;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  /* ---- Header ---- */
+  header.page {
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+    font-weight: 500;
+  }
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -.01em;
+    margin: 0 0 20px;
+    text-wrap: balance;
+  }
+  .lede {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 62ch;
+    margin: 0 0 8px;
+  }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  .howto {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .howto .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .howto .n {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .howto .step p { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+  .howto .step b { color: var(--ink); font-weight: 600; }
+
+  /* ---- Index ---- */
+  nav.index { padding: 30px 0; border-bottom: 1px solid var(--border); }
+  .index-group { margin-bottom: 16px; }
+  .index-group:last-child { margin-bottom: 0; }
+  .index-cat {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--faint);
+    display: flex; align-items: center; gap: 7px;
+    margin-bottom: 8px;
+  }
+  .index-links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .index-links a {
+    font-size: 13.5px;
+    color: var(--ink);
+    text-decoration: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 5px 11px;
+    border-radius: 999px;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .index-links a:hover { border-color: var(--accent); color: var(--accent); }
+  .index-links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+
+  /* ---- Category section headers ---- */
+  h2.cat-head {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 10px;
+    margin: 56px 0 20px;
+  }
+  h2.cat-head .dot { width: 10px; height: 10px; }
+
+  /* ---- Template card ---- */
+  .tpl {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 26px 28px 28px;
+    margin-bottom: 20px;
+    scroll-margin-top: 20px;
+  }
+  .tpl-top {
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 6px;
+  }
+  .tpl-top h3 {
+    font-family: var(--font-display);
+    font-size: 25px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    margin: 0;
+  }
+  .tpl-file {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--faint);
+  }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .whenuse {
+    font-size: 15px;
+    color: var(--muted);
+    margin: 0 0 22px;
+    max-width: 70ch;
+  }
+
+  .tpl-body {
+    display: grid;
+    grid-template-columns: minmax(210px, 260px) 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  .col-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0 0 12px;
+  }
+
+  /* Sections list */
+  ul.sections { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+  ul.sections li {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    font-size: 14px;
+    padding: 5px 0;
+    border-bottom: 1px dotted var(--border);
+  }
+  ul.sections li:last-child { border-bottom: none; }
+  ul.sections .sname { color: var(--ink); }
+  .fmt {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 5px;
+    flex: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface-2);
+  }
+  .fmt.table { color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent) 28%, transparent); background: var(--accent-soft); }
+
+  /* Example output block */
+  .example {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    overflow-x: auto;
+  }
+  .example .ex-h {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: var(--accent);
+    margin: 16px 0 5px;
+  }
+  .example .ex-h:first-child { margin-top: 0; }
+  .example p { margin: 0 0 4px; font-size: 13.5px; color: var(--ink); }
+  .example ul { margin: 2px 0 4px; padding-left: 18px; }
+  .example li { font-size: 13.5px; margin: 2px 0; color: var(--ink); }
+  .example .kv { font-size: 13.5px; color: var(--muted); margin: 0 0 2px; }
+  .example .kv b { color: var(--ink); font-weight: 600; }
+
+  table.ex {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 4px 0 6px;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  table.ex th, table.ex td {
+    text-align: left;
+    padding: 5px 10px 5px 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.ex th {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  table.ex td.owner { color: var(--accent-ink); font-weight: 600; white-space: nowrap; }
+
+  footer.page {
+    margin-top: 56px;
+    padding: 28px 0 64px;
+    border-top: 1px solid var(--border);
+    color: var(--faint);
+    font-size: 13px;
+  }
+  footer.page code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface-2);
+    padding: 1px 6px;
+    border-radius: 5px;
+  }
+
+  @media (max-width: 720px) {
+    .tpl-body { grid-template-columns: 1fr; gap: 20px; }
+    .howto { grid-template-columns: 1fr; }
+    header.page { padding: 48px 0 32px; }
+  }
+</style>
+
+<header class="page">
+  <div class="wrap">
+    <p class="eyebrow">Meetily · Template Reference</p>
+    <h1 class="title">Meeting Note Templates</h1>
+    <p class="lede">Pick a template when you generate a summary, and the on-device model fills each section from your transcript. This is a quick reference to <strong>all eleven templates</strong> — what each is for, the sections it produces, and an example of the output.</p>
+    <div class="howto">
+      <div class="step"><span class="n">1</span><p>Record or import a meeting, then open it and choose <b>Generate Summary</b>.</p></div>
+      <div class="step"><span class="n">2</span><p>Select a <b>template</b> that matches the meeting. <b>Professional Notes</b> is the default.</p></div>
+      <div class="step"><span class="n">3</span><p>The summary — and full transcript — are written to your <b>Wiki folder</b> automatically.</p></div>
+    </div>
+  </div>
+</header>
+
+<nav class="index">
+  <div class="wrap">
+    <div class="index-group">
+      <div class="index-cat"><span class="dot" style="background:var(--cat-general)"></span>General</div>
+      <div class="index-links">
+        <a href="#professional_notes">Professional Notes</a>
+        <a href="#standard_meeting">Standard Meeting Notes</a>
+        <a href="#daily_standup">Daily Standup</a>
+        <a href="#retrospective">Retrospective</a>
+      </div>
+    </div>
+    <div class="index-group">
+      <div class="index-cat"><span class="dot" style="background:var(--cat-sales)"></span>Sales &amp; Accounts</div>
+      <div class="index-links">
+        <a href="#sales_marketing_client_call">Client / Sales Meeting</a>
+        <a href="#sales_discovery_call">Sales Discovery Call</a>
+        <a href="#qbr_account_review">QBR / Account Review</a>
+      </div>
+    </div>
+    <div class="index-group">
+      <div class="index-cat"><span class="dot" style="background:var(--cat-vendor)"></span>Vendors</div>
+      <div class="index-links"><a href="#vendor_conference">Vendor Conference</a></div>
+    </div>
+    <div class="index-group">
+      <div class="index-cat"><span class="dot" style="background:var(--cat-project)"></span>Projects</div>
+      <div class="index-links"><a href="#project_sync">Project Sync / Status Update</a></div>
+    </div>
+    <div class="index-group">
+      <div class="index-cat"><span class="dot" style="background:var(--cat-ops)"></span>IT / Ops</div>
+      <div class="index-links"><a href="#it_incident_postmortem">IT Incident Postmortem</a></div>
+    </div>
+    <div class="index-group">
+      <div class="index-cat"><span class="dot" style="background:var(--cat-clinical)"></span>Clinical</div>
+      <div class="index-links"><a href="#psychatric_session">Psychiatric Session Note</a></div>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- ===================== GENERAL ===================== -->
+  <h2 class="cat-head"><span class="dot" style="background:var(--cat-general)"></span>General</h2>
+
+  <!-- Professional Notes -->
+  <section class="tpl" id="professional_notes">
+    <div class="tpl-top">
+      <h3>Professional Notes</h3>
+      <span class="badge">Default</span>
+      <span class="tpl-file">professional_notes.json</span>
+    </div>
+    <p class="whenuse">Polished, share-ready notes for almost any meeting. Neutral, professional tone; captures your own “I’ll…” commitments as action items owned by <b>Me</b>. Start here unless a more specific template fits.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Summary</span><span class="fmt">text</span></li>
+          <li><span class="sname">Key Decisions</span><span class="fmt">list</span></li>
+          <li><span class="sname">Action Items</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Discussion Highlights</span><span class="fmt">text</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <div class="ex-h">Summary</div>
+          <p>The team reviewed Q3 priorities for the Paragon Bank account and agreed to move the Microsoft 365 migration go-live earlier to clear the September FDIC audit. Two MFA-enrollment blockers were identified, with a remediation plan set.</p>
+          <div class="ex-h">Key Decisions</div>
+          <ul>
+            <li>Move M365 go-live to Aug 22 to finish ahead of the audit.</li>
+            <li>Standardize all Paragon endpoints on SentinelOne before migration.</li>
+          </ul>
+          <div class="ex-h">Action Items</div>
+          <table class="ex">
+            <thead><tr><th>Owner</th><th>Task</th><th>Due</th></tr></thead>
+            <tbody>
+              <tr><td class="owner">Me</td><td>Send Paragon the updated migration timeline</td><td>Jul 18</td></tr>
+              <tr><td class="owner">Marcus</td><td>Enroll remaining 40 users in MFA</td><td>Jul 25</td></tr>
+            </tbody>
+          </table>
+          <div class="ex-h">Discussion Highlights</div>
+          <p>Reviewed audit scope and the risk of legacy shared mailboxes. Priya flagged bandwidth limits at the Collierville branch that could slow the cutover.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Standard Meeting Notes -->
+  <section class="tpl" id="standard_meeting">
+    <div class="tpl-top">
+      <h3>Standard Meeting Notes</h3>
+      <span class="tpl-file">standard_meeting.json</span>
+    </div>
+    <p class="whenuse">The plain, no-frills version of Professional Notes — same four sections, lighter instructions. Good when you want a straightforward record without the extra polish.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Summary</span><span class="fmt">text</span></li>
+          <li><span class="sname">Key Decisions</span><span class="fmt">list</span></li>
+          <li><span class="sname">Action Items</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Discussion Highlights</span><span class="fmt">text</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <div class="ex-h">Summary</div>
+          <p>Weekly internal sync. Ticket volume is down week-over-week; the Delta Logistics onboarding is on track for month-end.</p>
+          <div class="ex-h">Key Decisions</div>
+          <ul>
+            <li>Freeze non-critical changes during the Delta cutover week.</li>
+          </ul>
+          <div class="ex-h">Action Items</div>
+          <table class="ex">
+            <thead><tr><th>Owner</th><th>Task</th><th>Due</th></tr></thead>
+            <tbody>
+              <tr><td class="owner">Priya</td><td>Finalize Delta network diagram</td><td>Jul 21</td></tr>
+            </tbody>
+          </table>
+          <div class="ex-h">Discussion Highlights</div>
+          <p>Discussed hiring a second helpdesk tech and the backlog of after-hours requests.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Daily Standup -->
+  <section class="tpl" id="daily_standup">
+    <div class="tpl-top">
+      <h3>Daily Standup</h3>
+      <span class="tpl-file">daily_standup.json</span>
+    </div>
+    <p class="whenuse">Short daily team check-ins. Captures yesterday / today / blockers per person, so the standup produces a usable record instead of evaporating.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Date</span><span class="fmt">text</span></li>
+          <li><span class="sname">Attendees</span><span class="fmt">list</span></li>
+          <li><span class="sname">Yesterday</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Today</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Blockers</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Notes</span><span class="fmt">text</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <p class="kv"><b>Date:</b> Thursday, Jul 17 2026 — 9:00 AM</p>
+          <div class="ex-h">Attendees</div>
+          <ul><li>JD, Marcus (Helpdesk), Priya (Network)</li></ul>
+          <div class="ex-h">Blockers</div>
+          <table class="ex">
+            <thead><tr><th>Owner</th><th>Blocker</th><th>Impact</th></tr></thead>
+            <tbody>
+              <tr><td class="owner">Marcus</td><td>Waiting on Datto RMA part</td><td>2 endpoints down</td></tr>
+            </tbody>
+          </table>
+          <div class="ex-h">Notes</div>
+          <p>Datto rep escalated the RMA; part expected Friday.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Retrospective -->
+  <section class="tpl" id="retrospective">
+    <div class="tpl-top">
+      <h3>Retrospective</h3>
+      <span class="tpl-file">retrospective.json</span>
+    </div>
+    <p class="whenuse">Agile-style team retros. Organizes the conversation into start / stop / continue plus action items, so the takeaways don’t get lost.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Sprint</span><span class="fmt">text</span></li>
+          <li><span class="sname">Attendance</span><span class="fmt">list</span></li>
+          <li><span class="sname">Start Doing</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Stop Doing</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Continue Doing</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Action Items</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Notes &amp; Votes</span><span class="fmt">text</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <p class="kv"><b>Sprint:</b> Sprint 24 (Jul 1 – Jul 14)</p>
+          <div class="ex-h">Start Doing</div>
+          <table class="ex">
+            <thead><tr><th>Idea</th><th>Proposer</th></tr></thead>
+            <tbody><tr><td>Pre-stage client hardware before install day</td><td>Priya</td></tr></tbody>
+          </table>
+          <div class="ex-h">Stop Doing</div>
+          <table class="ex">
+            <thead><tr><th>Practice</th><th>Reason</th></tr></thead>
+            <tbody><tr><td>Same-day scheduling</td><td>Burns out the on-call tech</td></tr></tbody>
+          </table>
+          <div class="ex-h">Action Items</div>
+          <table class="ex">
+            <thead><tr><th>Owner</th><th>Task</th><th>Due</th><th>Metric</th></tr></thead>
+            <tbody><tr><td class="owner">Me</td><td>Draft a pre-stage checklist</td><td>Jul 24</td><td>Install time −30%</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SALES & ACCOUNTS ===================== -->
+  <h2 class="cat-head"><span class="dot" style="background:var(--cat-sales)"></span>Sales &amp; Accounts</h2>
+
+  <!-- Client / Sales Meeting -->
+  <section class="tpl" id="sales_marketing_client_call">
+    <div class="tpl-top">
+      <h3>Client / Sales Meeting</h3>
+      <span class="tpl-file">sales_marketing_client_call.json</span>
+    </div>
+    <p class="whenuse">Meetings with an existing client or account — renewals, upsells, check-ins. Captures goals, agreed deliverables, commercial terms, and next steps.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Meeting Metadata</span><span class="fmt">text</span></li>
+          <li><span class="sname">Attendees</span><span class="fmt">list</span></li>
+          <li><span class="sname">Client Goals &amp; Success Criteria</span><span class="fmt">text</span></li>
+          <li><span class="sname">Agreed Deliverables</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Commercial Terms Discussed</span><span class="fmt">text</span></li>
+          <li><span class="sname">Risks &amp; Concerns</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Next Steps</span><span class="fmt table">table</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <p class="kv"><b>Meeting Metadata:</b> Jul 16 2026 — Paragon Bank, renewal review</p>
+          <div class="ex-h">Client Goals &amp; Success Criteria</div>
+          <p>Paragon wants zero downtime during the branch consolidation and a clear security posture for the FDIC audit.</p>
+          <div class="ex-h">Commercial Terms Discussed</div>
+          <p>Renewal at $8,400/mo for 24 months; added SOC monitoring add-on at $1,200/mo.</p>
+          <div class="ex-h">Next Steps</div>
+          <table class="ex">
+            <thead><tr><th>Owner</th><th>Action</th><th>Due</th></tr></thead>
+            <tbody>
+              <tr><td class="owner">Me</td><td>Send renewal paperwork &amp; SOC addendum</td><td>Jul 18</td></tr>
+              <tr><td class="owner">Dev (Paragon)</td><td>Confirm branch cutover window</td><td>Jul 23</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sales Discovery Call -->
+  <section class="tpl" id="sales_discovery_call">
+    <div class="tpl-top">
+      <h3>Sales Discovery Call</h3>
+      <span class="tpl-file">sales_discovery_call.json</span>
+    </div>
+    <p class="whenuse">Early-stage calls with a <em>prospect</em> — first discovery, qualification. Focused on needs, budget, decision process, timeline, and objections, not an ongoing relationship.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Prospect &amp; Meeting Context</span><span class="fmt">text</span></li>
+          <li><span class="sname">Attendees</span><span class="fmt">list</span></li>
+          <li><span class="sname">Needs &amp; Pain Points</span><span class="fmt">text</span></li>
+          <li><span class="sname">Current Solution / Status Quo</span><span class="fmt">text</span></li>
+          <li><span class="sname">Budget &amp; Decision Process</span><span class="fmt">text</span></li>
+          <li><span class="sname">Timeline</span><span class="fmt">text</span></li>
+          <li><span class="sname">Objections &amp; Concerns</span><span class="fmt">list</span></li>
+          <li><span class="sname">Next Steps</span><span class="fmt table">table</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <p class="kv"><b>Prospect &amp; Meeting Context:</b> First discovery call — Delta Logistics (120 staff, 3 warehouses).</p>
+          <div class="ex-h">Needs &amp; Pain Points</div>
+          <p>Frequent downtime on their warehouse system, no after-hours support today, and a ransomware scare last quarter that rattled the owner.</p>
+          <div class="ex-h">Budget &amp; Decision Process</div>
+          <p>No firm budget named. The Ops Director and owner decide together; they want a proposal to take to the owner.</p>
+          <div class="ex-h">Objections &amp; Concerns</div>
+          <ul>
+            <li>Worried about switching costs from their current break/fix guy.</li>
+            <li>Unsure about a long contract term.</li>
+          </ul>
+          <div class="ex-h">Next Steps</div>
+          <table class="ex">
+            <thead><tr><th>Owner</th><th>Action</th><th>Due</th></tr></thead>
+            <tbody><tr><td class="owner">Me</td><td>Send assessment proposal</td><td>Jul 22</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QBR / Account Review -->
+  <section class="tpl" id="qbr_account_review">
+    <div class="tpl-top">
+      <h3>QBR / Account Review</h3>
+      <span class="tpl-file">qbr_account_review.json</span>
+    </div>
+    <p class="whenuse">Quarterly or periodic business reviews with a client. Frames performance against goals, wins, risks, and what’s coming next.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Account Overview</span><span class="fmt">text</span></li>
+          <li><span class="sname">Attendees</span><span class="fmt">list</span></li>
+          <li><span class="sname">Performance Against Goals</span><span class="fmt">text</span></li>
+          <li><span class="sname">Wins &amp; Highlights</span><span class="fmt">list</span></li>
+          <li><span class="sname">Challenges &amp; Risks</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Upcoming Initiatives</span><span class="fmt">list</span></li>
+          <li><span class="sname">Action Items</span><span class="fmt table">table</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <p class="kv"><b>Account Overview:</b> Delta Logistics — Q2 2026 review</p>
+          <div class="ex-h">Performance Against Goals</div>
+          <p>Uptime 99.92% against a 99.9% target; average ticket resolution 3.1h against a 4h target.</p>
+          <div class="ex-h">Wins &amp; Highlights</div>
+          <ul><li>Zero security incidents this quarter after the SentinelOne rollout.</li></ul>
+          <div class="ex-h">Challenges &amp; Risks</div>
+          <table class="ex">
+            <thead><tr><th>Risk</th><th>Impact</th><th>Owner</th></tr></thead>
+            <tbody><tr><td>Aging firewall at HQ (EOL Q4)</td><td>Support &amp; security gap</td><td class="owner">Me</td></tr></tbody>
+          </table>
+          <div class="ex-h">Upcoming Initiatives</div>
+          <ul><li>Firewall refresh; company-wide security-awareness training in Q3.</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== VENDORS ===================== -->
+  <h2 class="cat-head"><span class="dot" style="background:var(--cat-vendor)"></span>Vendors</h2>
+
+  <!-- Vendor Conference -->
+  <section class="tpl" id="vendor_conference">
+    <div class="tpl-top">
+      <h3>Vendor Conference</h3>
+      <span class="tpl-file">vendor_conference.json</span>
+    </div>
+    <p class="whenuse">Calls with vendors or channel partners. Captures products discussed, pricing and terms, roadmap, and support/escalation — plus commitments from both sides.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Meeting Metadata</span><span class="fmt">text</span></li>
+          <li><span class="sname">Attendees</span><span class="fmt">list</span></li>
+          <li><span class="sname">Products/Services Discussed</span><span class="fmt">text</span></li>
+          <li><span class="sname">Pricing &amp; Commercial Terms</span><span class="fmt">text</span></li>
+          <li><span class="sname">Roadmap &amp; Upcoming Releases</span><span class="fmt">text</span></li>
+          <li><span class="sname">Support &amp; Escalation Process</span><span class="fmt">text</span></li>
+          <li><span class="sname">Action Items</span><span class="fmt table">table</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <p class="kv"><b>Meeting Metadata:</b> Jul 15 2026 — SentinelOne partner sync</p>
+          <div class="ex-h">Pricing &amp; Commercial Terms</div>
+          <p>Partner pricing at $4.10/endpoint/mo at 500+ seats; 15% deal-registration discount available on new logos.</p>
+          <div class="ex-h">Roadmap &amp; Upcoming Releases</div>
+          <p>Purple AI reaches GA in Q4; network-discovery “Ranger” is in beta now.</p>
+          <div class="ex-h">Support &amp; Escalation Process</div>
+          <p>Dedicated channel SE assigned; Sev-1 escalation via the partner portal with a 1-hour response SLA.</p>
+          <div class="ex-h">Action Items</div>
+          <table class="ex">
+            <thead><tr><th>Owner</th><th>Task</th><th>Due</th></tr></thead>
+            <tbody>
+              <tr><td class="owner">Me</td><td>Submit deal reg for Delta Logistics</td><td>Jul 18</td></tr>
+              <tr><td class="owner">Channel rep</td><td>Send Purple AI beta access</td><td>Jul 21</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PROJECTS ===================== -->
+  <h2 class="cat-head"><span class="dot" style="background:var(--cat-project)"></span>Projects</h2>
+
+  <!-- Project Sync -->
+  <section class="tpl" id="project_sync">
+    <div class="tpl-top">
+      <h3>Project Sync / Status Update</h3>
+      <span class="tpl-file">project_sync.json</span>
+    </div>
+    <p class="whenuse">Recurring internal project status meetings. The most detailed template — milestones, risks, decisions, action items, and linked documents.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Meeting Date &amp; Time</span><span class="fmt">text</span></li>
+          <li><span class="sname">Attendees</span><span class="fmt">list</span></li>
+          <li><span class="sname">Milestones &amp; Status</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Progress Summary</span><span class="fmt">text</span></li>
+          <li><span class="sname">Top Risks &amp; Mitigations</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Key Decisions</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Action Items</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Related Documents</span><span class="fmt table">table</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <p class="kv"><b>Meeting Date &amp; Time:</b> Jul 17 2026, 2:00–2:30 PM — facilitator: JD</p>
+          <div class="ex-h">Milestones &amp; Status</div>
+          <table class="ex">
+            <thead><tr><th>Milestone</th><th>Status</th><th>ETA</th></tr></thead>
+            <tbody>
+              <tr><td>M365 migration</td><td>At risk</td><td>Aug 22</td></tr>
+              <tr><td>Endpoint standardization</td><td>On track</td><td>Aug 8</td></tr>
+            </tbody>
+          </table>
+          <div class="ex-h">Progress Summary</div>
+          <p>Endpoint work is ahead of schedule; the migration slipped a week on MFA enrollment but the audit deadline still holds.</p>
+          <div class="ex-h">Top Risks &amp; Mitigations</div>
+          <table class="ex">
+            <thead><tr><th>Risk</th><th>Impact</th><th>Mitigation</th><th>Owner</th></tr></thead>
+            <tbody><tr><td>Branch bandwidth</td><td>Slow cutover</td><td>Stage after hours</td><td class="owner">Priya</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== IT / OPS ===================== -->
+  <h2 class="cat-head"><span class="dot" style="background:var(--cat-ops)"></span>IT / Ops</h2>
+
+  <!-- IT Incident Postmortem -->
+  <section class="tpl" id="it_incident_postmortem">
+    <div class="tpl-top">
+      <h3>IT Incident Postmortem</h3>
+      <span class="tpl-file">it_incident_postmortem.json</span>
+    </div>
+    <p class="whenuse">Reviewing an outage or incident after the fact. Reconstructs the timeline, isolates root cause, and turns lessons into follow-up actions.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Incident Summary</span><span class="fmt">text</span></li>
+          <li><span class="sname">Timeline of Events</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Root Cause</span><span class="fmt">text</span></li>
+          <li><span class="sname">Impact</span><span class="fmt">text</span></li>
+          <li><span class="sname">Remediation Actions Taken</span><span class="fmt">list</span></li>
+          <li><span class="sname">Follow-up Action Items</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Lessons Learned</span><span class="fmt">text</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <p class="kv"><b>Incident Summary:</b> Jul 12, 2:14–4:47 AM CDT — Delta Logistics WMS outage. Severity: High. Duration: 2h 33m.</p>
+          <div class="ex-h">Timeline of Events</div>
+          <table class="ex">
+            <thead><tr><th>Time</th><th>Event</th></tr></thead>
+            <tbody>
+              <tr><td>02:14</td><td>Monitoring alert: WMS host unresponsive</td></tr>
+              <tr><td>02:40</td><td>On-call engaged; RAID controller flagged</td></tr>
+              <tr><td>04:47</td><td>Service restored from last clean backup</td></tr>
+            </tbody>
+          </table>
+          <div class="ex-h">Root Cause</div>
+          <p><b>Confirmed:</b> failed RAID controller battery disabled write-cache and corrupted the database. <b>Suspected (unconfirmed):</b> a firmware bug contributed.</p>
+          <div class="ex-h">Lessons Learned</div>
+          <p>Monitoring never alerted on controller-battery health — add that check across all managed hosts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CLINICAL ===================== -->
+  <h2 class="cat-head"><span class="dot" style="background:var(--cat-clinical)"></span>Clinical</h2>
+
+  <!-- Psychiatric Session -->
+  <section class="tpl" id="psychatric_session">
+    <div class="tpl-top">
+      <h3>Psychiatric Session Note</h3>
+      <span class="tpl-file">psychatric_session.json</span>
+    </div>
+    <p class="whenuse">A specialized clinical template that ships with Meetily, following the SOAP format (Subjective / Objective / Assessment / Plan). Included for completeness — not an MSP template. The example below is generic placeholder content.</p>
+    <div class="tpl-body">
+      <div>
+        <p class="col-label">Sections</p>
+        <ul class="sections">
+          <li><span class="sname">Session Metadata</span><span class="fmt">text</span></li>
+          <li><span class="sname">AI Session Summary</span><span class="fmt">text</span></li>
+          <li><span class="sname">Subjective (S)</span><span class="fmt">text</span></li>
+          <li><span class="sname">Objective (O)</span><span class="fmt">text</span></li>
+          <li><span class="sname">Assessment (A)</span><span class="fmt">text</span></li>
+          <li><span class="sname">Plan (P)</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Medications</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Diagnoses (DSM/ICD)</span><span class="fmt table">table</span></li>
+          <li><span class="sname">Safety &amp; Risk Management</span><span class="fmt">text</span></li>
+          <li><span class="sname">Next Appointment</span><span class="fmt">text</span></li>
+          <li><span class="sname">Audit Trail</span><span class="fmt">text</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="col-label">Example output</p>
+        <div class="example">
+          <p class="kv"><b>Session Metadata:</b> [date] — session #, modality (in-person / telehealth)</p>
+          <div class="ex-h">AI Session Summary</div>
+          <p>A neutral, one-paragraph recap of the session generated from the transcript.</p>
+          <div class="ex-h">Plan (P)</div>
+          <table class="ex">
+            <thead><tr><th>Intervention</th><th>Owner</th><th>Frequency</th><th>Follow-up</th></tr></thead>
+            <tbody><tr><td>[intervention]</td><td>[clinician]</td><td>[cadence]</td><td>[when]</td></tr></tbody>
+          </table>
+          <p class="kv" style="margin-top:8px"><b>Next Appointment:</b> [date / interval]</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="page">
+  <div class="wrap">
+    Formats: <code>text</code> = a written paragraph · <code>list</code> = bullet points · <code>table</code> = a structured table.
+    Templates live as JSON in <code>frontend/src-tauri/templates/</code> — add or tweak one and it appears in the picker automatically.
+    Every section also obeys the global rule: only what’s actually in the transcript, never invented; empty sections read “None noted in this section.”
+  </div>
+</footer>
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('themeToggle');
+  function current() {
+    return root.getAttribute('data-theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+  btn.addEventListener('click', function () {
+    root.setAttribute('data-theme', current() === 'dark' ? 'light' : 'dark');
+  });
+})();
+</script>
+</body>
+</html>
