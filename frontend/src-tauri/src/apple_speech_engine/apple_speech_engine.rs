@@ -280,6 +280,11 @@ impl AppleSpeechEngine {
             let _ = handle.child.kill().await;
         }
         *guard = None;
+        // Clear the reserved locale so the next use re-runs ensure_ready and
+        // re-sends `init` to the freshly respawned sidecar. Without this,
+        // is_model_loaded() would still report true and validation would skip
+        // init, leaving the new sidecar unready ("send an init request first").
+        *self.current_locale.write().await = None;
     }
 }
 
