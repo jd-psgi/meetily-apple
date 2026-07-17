@@ -1,0 +1,47 @@
+{
+  "name": "Sales Discovery Call",
+  "description": "For early-stage sales calls focused on understanding a prospect's needs, budget, and buying process - distinct from ongoing client/account meetings.",
+  "sections": [
+    {
+      "title": "Prospect & Meeting Context",
+      "instruction": "State the prospect/company name, attendees' roles, and the purpose of the call (e.g. first discovery call, follow-up demo).",
+      "format": "string"
+    },
+    {
+      "title": "Attendees",
+      "instruction": "List attendees and their roles or companies",
+      "format": "list"
+    },
+    {
+      "title": "Needs & Pain Points",
+      "instruction": "Describe the problems, pain points, or goals the prospect described in their own words. Focus on what's actually costing them time, money, or risk today.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Current Solution / Status Quo",
+      "instruction": "Summarize what the prospect currently uses or does instead, and its shortcomings, if discussed.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Budget & Decision Process",
+      "instruction": "Capture any budget figures, approval process, or decision-makers mentioned. If not discussed, say so explicitly - do not guess.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Timeline",
+      "instruction": "State any timeline or urgency the prospect mentioned for solving this problem or making a decision.",
+      "format": "string"
+    },
+    {
+      "title": "Objections & Concerns",
+      "instruction": "List any hesitations, objections, or concerns the prospect raised.",
+      "format": "list"
+    },
+    {
+      "title": "Next Steps",
+      "instruction": "List agreed next steps, including the speaker's own first-person commitments (e.g. \"I'll send over...\"), owned by \"Me\".",
+      "format": "list",
+      "item_format": "| **Owner** | **Action** | **Due Date** |\n| --- | --- | --- |"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "name": "IT Incident Postmortem",
+  "description": "For reviewing an IT incident or outage: what happened, why, and how to prevent recurrence.",
+  "sections": [
+    {
+      "title": "Incident Summary",
+      "instruction": "State the incident date/time, affected systems, severity, and total duration/impact as discussed.",
+      "format": "string"
+    },
+    {
+      "title": "Timeline of Events",
+      "instruction": "Reconstruct the sequence of events in chronological order with timestamps, as described in the discussion.",
+      "format": "list",
+      "item_format": "| **Time** | **Event** |\n| --- | --- |"
+    },
+    {
+      "title": "Root Cause",
+      "instruction": "Describe the root cause(s) identified. Distinguish confirmed root cause from suspected/unconfirmed causes.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Impact",
+      "instruction": "Summarize who/what was affected - systems, clients, users - and for how long.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Remediation Actions Taken",
+      "instruction": "List the steps taken to resolve the incident during the response.",
+      "format": "list"
+    },
+    {
+      "title": "Follow-up Action Items",
+      "instruction": "List preventive or follow-up actions to reduce recurrence risk, with an owner and due date.",
+      "format": "list",
+      "item_format": "| **Owner** | **Task** | **Due Date** |\n| --- | --- | --- |"
+    },
+    {
+      "title": "Lessons Learned",
+      "instruction": "Summarize what the team learned and what should change going forward.",
+      "format": "paragraph"
+    }
+  ]
+}

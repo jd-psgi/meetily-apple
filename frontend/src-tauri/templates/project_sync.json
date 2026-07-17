@@ -14,13 +14,13 @@
     },
     {
       "title": "Milestones & Status",
-      "instruction": "Current milestones with status and estimated completion date",
+      "instruction": "List each milestone discussed with its current status (on track / at risk / blocked / complete) and target date, exactly as stated.",
       "format": "list",
       "item_format": "| **Milestone** | **Status** | **ETA** |\n| --- | --- | --- |"
     },
     {
       "title": "Progress Summary",
-      "instruction": "Short paragraph summarizing progress since last sync meeting",
+      "instruction": "Summarize overall project health in 2-3 sentences: what's going well, and what's changed since the last sync.",
       "format": "paragraph"
     },
     {
@@ -43,7 +43,7 @@
     },
     {
       "title": "Related Documents",
-      "instruction": "Links to relevant documents, tickets, or designs discussed",
+      "instruction": "List any documents, links, or files explicitly mentioned by name or URL. If none were mentioned, write \"None noted in this section\" rather than guessing.",
       "format": "list",
       "item_format": "| **Document Title** | **URL** | **Type** |\n| --- | --- | --- |"
     }

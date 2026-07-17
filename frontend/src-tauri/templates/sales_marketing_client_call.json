@@ -4,7 +4,7 @@
       "sections": [
         {
           "title": "Meeting Metadata",
-          "instruction": "Date, time, location/modality, account manager",
+          "instruction": "State the date, client/account name, and the purpose of the meeting (e.g. renewal, upsell, check-in, onboarding) as stated or clearly evident from context.",
           "format": "string"
         },
         {
@@ -14,18 +14,18 @@
         },
         {
           "title": "Client Goals & Success Criteria",
-          "instruction": "What the client wants to achieve and how success will be measured",
+          "instruction": "Describe what the client is trying to achieve and how they define success, in their own terms. Distinguish goals the client stated from things the team merely proposed.",
           "format": "paragraph"
         },
         {
           "title": "Agreed Deliverables",
-          "instruction": "Deliverables, owners, and due dates",
+          "instruction": "List only deliverables both sides explicitly agreed to - not proposals still under discussion. Include the owner and due date for each.",
           "format": "list",
           "item_format": "| **Deliverable** | **Owner** | **Due Date** |\n| --- | --- | --- |"
         },
         {
           "title": "Commercial Terms Discussed",
-          "instruction": "Pricing, SLAs, payment terms or contract items discussed",
+          "instruction": "Summarize pricing, contract terms, discounts, or budget figures discussed, using exact numbers as stated. If no commercial terms came up, say so explicitly.",
           "format": "paragraph"
         },
         {
@@ -36,7 +36,7 @@
         },
         {
           "title": "Next Steps",
-          "instruction": "Actions, owners, and due dates",
+          "instruction": "List concrete next steps with an owner and date. Include the speaker's own first-person commitments (e.g. \"I'll follow up on...\"), owned by \"Me\".",
           "format": "list",
           "item_format": "| **Owner** | **Action** | **Due Date** |\n| --- | --- | --- |"
         }

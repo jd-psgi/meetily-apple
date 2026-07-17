@@ -1,0 +1,42 @@
+{
+  "name": "Vendor Conference",
+  "description": "For calls with vendors or partners covering products, pricing, and roadmap.",
+  "sections": [
+    {
+      "title": "Meeting Metadata",
+      "instruction": "State the date, vendor/partner name, and the purpose of the call.",
+      "format": "string"
+    },
+    {
+      "title": "Attendees",
+      "instruction": "List attendees from both sides with their roles",
+      "format": "list"
+    },
+    {
+      "title": "Products/Services Discussed",
+      "instruction": "Summarize which products, services, or solutions the vendor presented or discussed.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Pricing & Commercial Terms",
+      "instruction": "Capture pricing, discounts, licensing terms, or contract details discussed, using exact figures stated. If none came up, say so explicitly.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Roadmap & Upcoming Releases",
+      "instruction": "Summarize any product roadmap, upcoming features, or release timelines the vendor shared.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Support & Escalation Process",
+      "instruction": "Note anything discussed about support channels, SLAs, or escalation paths.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Action Items",
+      "instruction": "List commitments from both sides with owner and due date, including the speaker's own first-person commitments owned by \"Me\".",
+      "format": "list",
+      "item_format": "| **Owner** | **Task** | **Due Date** |\n| --- | --- | --- |"
+    }
+  ]
+}

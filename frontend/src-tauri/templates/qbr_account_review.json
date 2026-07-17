@@ -1,0 +1,43 @@
+{
+  "name": "QBR / Account Review",
+  "description": "For quarterly or periodic client business reviews: performance against goals, wins, risks, and what's next.",
+  "sections": [
+    {
+      "title": "Account Overview",
+      "instruction": "State the client/account name and the review period covered.",
+      "format": "string"
+    },
+    {
+      "title": "Attendees",
+      "instruction": "List attendees and their roles or companies",
+      "format": "list"
+    },
+    {
+      "title": "Performance Against Goals",
+      "instruction": "Summarize how the account has performed against previously agreed goals or KPIs, using specific figures where stated.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Wins & Highlights",
+      "instruction": "List concrete wins, achievements, or positive outcomes discussed.",
+      "format": "list"
+    },
+    {
+      "title": "Challenges & Risks",
+      "instruction": "List challenges, risks, or areas of concern raised by either side.",
+      "format": "list",
+      "item_format": "| **Risk** | **Impact** | **Owner** |\n| --- | --- | --- |"
+    },
+    {
+      "title": "Upcoming Initiatives",
+      "instruction": "List initiatives, projects, or opportunities planned for the next period.",
+      "format": "list"
+    },
+    {
+      "title": "Action Items",
+      "instruction": "List commitments with owner and due date, including the speaker's own first-person commitments owned by \"Me\".",
+      "format": "list",
+      "item_format": "| **Owner** | **Task** | **Due Date** |\n| --- | --- | --- |"
+    }
+  ]
+}
