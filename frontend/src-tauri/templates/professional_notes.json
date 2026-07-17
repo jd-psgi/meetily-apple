@@ -1,0 +1,27 @@
+{
+  "name": "Professional Notes",
+  "description": "Polished, professional meeting notes: executive summary, decisions, owner-assigned action items, and discussion highlights.",
+  "sections": [
+    {
+      "title": "Summary",
+      "instruction": "Write a concise, professional executive summary of 2-4 sentences. Lead with the bottom line: the meeting's purpose, the most important outcomes, and any overall conclusion. Neutral third-person voice, no filler.",
+      "format": "paragraph"
+    },
+    {
+      "title": "Key Decisions",
+      "instruction": "List every decision that was actually made or agreed. State each as a concrete outcome, and include its rationale when the source gives one. Do not list topics that were merely discussed without a decision.",
+      "format": "list"
+    },
+    {
+      "title": "Action Items",
+      "instruction": "List every task or commitment. Include explicitly assigned tasks AND first-person commitments the speaker makes about themselves (\"I need to...\", \"I'll...\", \"I'm going to...\", \"I have to...\") - these are real action items, not just discussion. For the owner: use the person named in the source; for a first-person commitment, set the owner to the speaker (\"Me\"); only leave the owner blank when the task truly has no identifiable owner - never invent a name. Also capture the due date if mentioned and the supporting transcript segment with its timestamp.",
+      "format": "list",
+      "item_format": "| **Owner** | Task | Due | Reference Transcript Segment | Segment Time stamp |\n| --- | --- | --- | --- | --- |"
+    },
+    {
+      "title": "Discussion Highlights",
+      "instruction": "Summarize the substantive discussion in a few tight paragraphs: the main topics, key points and arguments raised, trade-offs weighed, and any notable insights or concerns. Omit small talk and off-topic chatter.",
+      "format": "paragraph"
+    }
+  ]
+}
